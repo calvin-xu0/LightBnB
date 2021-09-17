@@ -17,16 +17,6 @@ const pool = new Pool({
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithEmail = function(email) {
-  let user;
-  // for (const userId in users) {
-  //   user = users[userId];
-  //   if (user.email.toLowerCase() === email.toLowerCase()) {
-  //     break;
-  //   } else {
-  //     user = null;
-  //   }
-  // }
-  // return Promise.resolve(user);
   return pool
     .query(`
     SELECT *
@@ -34,7 +24,7 @@ const getUserWithEmail = function(email) {
     WHERE email = $1
     `, [`${email}`])
     .then(user => user.rows[0])
-    .catch(null);
+    .catch(() => null);
 }
 exports.getUserWithEmail = getUserWithEmail;
 
@@ -51,7 +41,7 @@ const getUserWithId = function(id) {
     WHERE id = $1
     `, [`${id}`])
     .then(user => user.rows[0])
-    .catch(null);
+    .catch(() => null);
 }
 exports.getUserWithId = getUserWithId;
 
@@ -62,10 +52,6 @@ exports.getUserWithId = getUserWithId;
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser =  function(user) {
-  // const userId = Object.keys(users).length + 1;
-  // user.id = userId;
-  // users[userId] = user;
-  // return Promise.resolve(user);
   return pool
     .query(`
     INSERT INTO users (name, email, password)
@@ -73,7 +59,7 @@ const addUser =  function(user) {
     RETURNING *
     `, [`${user.name}`, `${user.email}`, `${user.password}`])
     .then(result => result.rows[0])
-    .catch(err => console.log(err));
+    .catch(err => err);
 }
 exports.addUser = addUser;
 
@@ -85,7 +71,16 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  // return getAllProperties(null, 2);
+  return pool
+    .query(`
+    SELECT *
+    FROM reservations
+    WHERE guest_id = $1
+    LIMIT $2
+    `, [`${guest_id}`, `${limit}`])
+    .then(reservations => reservations.rows)
+    .catch(err => console.log(err));
 }
 exports.getAllReservations = getAllReservations;
 
@@ -104,8 +99,7 @@ const getAllProperties = (options, limit = 10) => {
     SELECT *
     FROM properties
     LIMIT $1
-    `,
-      [limit])
+    `, [limit])
     .then((result) => result.rows)
     .catch((err) => err.message);
 };
